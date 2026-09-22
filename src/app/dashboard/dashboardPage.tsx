@@ -1,0 +1,81 @@
+"use client";
+
+import {
+  DerpChecklet,
+  MushyChecklet,
+  PennyChecklet,
+} from "@/app/_components/checklets/checklets";
+import { NormalButton } from "@/app/_components/ui/Button";
+import { DashboardChecker } from "@/app/dashboard/DashboardChecker";
+import { useTrpcCtx } from "@/app/TrpcCtx";
+import { type UserCtx } from "@/firebase/edge_env";
+import { type GetUserCheckersType } from "@/server/api/routers/checker/checker";
+import { handleErr } from "@/trpc/react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+
+interface Props {
+  user: UserCtx;
+  // checkers: UserCheckersType;
+}
+
+// used to show you your checkers.
+export const Dashboard = ({ user }: Props) => {
+  const [currCheckers, setCurrCheckers] = useState<GetUserCheckersType>([]);
+  const { trpcClient } = useTrpcCtx();
+
+  const [isCreating, setIsCreating] = useState(false);
+
+  useEffect(() => {
+    handleErr(trpcClient.checker.getUserCheckers.query(), (checkers) => {
+      setCurrCheckers(checkers);
+    });
+  }, [trpcClient]);
+  const router = useRouter();
+
+  const createChecker = useCallback(() => {
+    setIsCreating(true);
+    handleErr(
+      trpcClient.checker.create.mutate(),
+      (checker) => {
+        router.push(`/checker/${checker.id}/edit`);
+      },
+      () => {
+        setIsCreating(false);
+      },
+    );
+  }, [router, trpcClient]);
+
+  return (
+    <div className="flex">
+      <div className="container mx-auto ml-20 mt-20">
+        <p className="font-mackinac text-2xl font-bold">Your Checkers</p>
+        <div className="mx-auto ml-0 mt-4 w-[450px]">
+          {currCheckers.map((checkerBlueprint) => {
+            return (
+              <div key={`checker-${checkerBlueprint.id}`}>
+                <DashboardChecker
+                  user={user}
+                  blueprint={checkerBlueprint}
+                  onDeleteChecker={() => {
+                    setCurrCheckers(
+                      currCheckers.filter((c) => c.id !== checkerBlueprint.id),
+                    );
+                  }}
+                />
+              </div>
+            );
+          })}
+        </div>
+        <NormalButton onClick={createChecker} disabled={isCreating}>
+          {isCreating ? "Creating..." : "Create Checker"}
+        </NormalButton>
+        {/* the div is to provide some buffer */}
+        <div className="h-32" />
+        <PennyChecklet className="absolute bottom-[15rem] right-[40%] h-[7rem]" />
+        <MushyChecklet className="absolute right-[30%] top-[30vh] h-[5rem]" />
+        <DerpChecklet className="absolute bottom-[10rem] right-[10%] h-[5rem]" />
+      </div>
+    </div>
+  );
+};
