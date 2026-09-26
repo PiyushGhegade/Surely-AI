@@ -1,0 +1,14 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* uncomment this to see the outlines of each element. Really useful to see which element is wider than the page width and creting a horizontal scrollbar! */
+
+/* * {
+  outline: 1px solid #f00 !important;
+} */
+
+/* helps us with tailwindcss issues: https://stackoverflow.com/questions/74607419/react-markdown-don%C2%B4t-render-markdown*/
+.markdown > * {
+  all: revert;
+}
